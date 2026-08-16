@@ -2,6 +2,8 @@ package com.matchguard.backend.controller;
 
 import com.matchguard.backend.dto.ProductRequestDto;
 import com.matchguard.backend.dto.ProductResponseDto;
+import com.matchguard.backend.dto.productDto.ProductRecommendationDto;
+import com.matchguard.backend.service.AiSearchService;
 import com.matchguard.backend.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,10 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private AiSearchService aiSearchService;
+
+
     @PostMapping("/seller")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductRequestDto requestDto) {
@@ -30,5 +36,15 @@ public class ProductController {
     public ResponseEntity<List<ProductResponseDto>> getProductsBySeller(@PathVariable Long sellerId) {
         List<ProductResponseDto> products = productService.getProductsBySeller(sellerId);
         return ResponseEntity.ok(products);
+    }
+
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<ProductRecommendationDto>> searchProducts(
+            @RequestParam("query") String query
+    ) {
+        List<ProductRecommendationDto> recommendations = aiSearchService.searchProducts(query);
+        return ResponseEntity.ok(recommendations);
     }
 }
