@@ -6,10 +6,12 @@ MatchGuard is an AI-driven search and escrow protocol designed to protect social
 
 ### Documenation
 
-| Documentation | Links to read                                                        |
-|:--------------|:---------------------------------------------------------------------|
+| Documentation                         | Links to read                                                        |
+|:--------------------------------------|:---------------------------------------------------------------------|
  | Documentation for spring architecture | https://github.com/YeZawHlaing/MatchGuard/blob/main/Documentation.md |
- | Github Workflow | https://github.com/YeZawHlaing/MatchGuard/blob/main/GitFlow.md                                                                     |
+ | Github Workflow                       | https://github.com/YeZawHlaing/MatchGuard/blob/main/GitFlow.md       |
+| Project Architecture                  |      https://github.com/YeZawHlaing/MatchGuard/blob/main/ProjectStructure.md                                                                |
+| Project Structure Explaination        |        https://github.com/YeZawHlaing/MatchGuard/blob/main/PackageDescription.md                                                              |
 
 ---
 ### Tech Stack
