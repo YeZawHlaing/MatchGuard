@@ -76,7 +76,7 @@ src/main/java/com/matchguard/
 │   ├── ProductRepository.java
 │   └── TransactionRepository.java
 │
-├── model/                            # Domain Entities & Enums
+├── entity/                            # Domain Entities & Enums
 │   ├── User.java
 │   ├── Product.java
 │   ├── Transaction.java
