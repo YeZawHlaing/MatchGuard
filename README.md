@@ -3,6 +3,15 @@
 MatchGuard is an AI-driven search and escrow protocol designed to protect social commerce buyers and sellers (on Facebook, TikTok, and Viber) from scams. This backend is built with Spring Boot and provides secure authentication, AI-powered scam detection, semantic inventory search, automated receipt OCR verification, and a QR-code escrow release handshake.
 
 ---
+
+### Documenation
+
+| Documentation | Links to read                                                        |
+|:--------------|:---------------------------------------------------------------------|
+ | Documentation for spring architecture | https://github.com/YeZawHlaing/MatchGuard/blob/main/Documentation.md |
+ | Github Workflow | https://github.com/YeZawHlaing/MatchGuard/blob/main/GitFlow.md                                                                     |
+
+---
 ### Tech Stack
 
 - **Language & Framework:** _Java 17+_, Spring Boot (Web, Data JPA, Spring Security, Validation)
