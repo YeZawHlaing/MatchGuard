@@ -17,6 +17,7 @@ public class ProductRecommendationDto {
     private String socialPostUrl;
     private Integer trustScore;
     private Boolean isVerifiedSafe;
-    private Integer fitScore;             // 0-100 compatibility score based on user intent
-    private String compatibilityInsight;  // AI explanation of why this matches the user's query
+    private Integer fitScore;
+    private String compatibilityInsight;  // Why it matches the user's search query
+    private String explanation;           // Detailed breakdown of the product and its features
 }

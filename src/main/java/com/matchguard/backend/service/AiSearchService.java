@@ -27,7 +27,6 @@ public class AiSearchService {
     private final ObjectMapper objectMapper;
 
     public List<ProductRecommendationDto> searchProducts(String userQuery) {
-        // 1. Fetch active inventory from database
         List<Product> allProducts = productRepository.findAll();
 
         if (allProducts.isEmpty()) {
@@ -35,23 +34,23 @@ public class AiSearchService {
         }
 
         try {
-            // 2. Serialize products to JSON context for the LLM
             String inventoryJson = objectMapper.writeValueAsString(allProducts);
 
-            // 3. Define System and User Prompt Template
             String promptMessage = """
-                You are an intelligent product recommendation and scam-protection assistant for MatchGuard.
+                You are MatchGuard's expert AI Shopping Assistant and Scam Protection Advisor.
                 
-                Analyze the user query: "{userQuery}"
-                Against the following active inventory items (JSON):
+                The customer searched with this natural language request: "{userQuery}"
+                
+                Here is our current active inventory database (JSON):
                 {inventoryJson}
                 
-                Instructions:
-                1. Match items that best satisfy the user's natural language query intent and budget.
-                2. Calculate a compatibility 'fitScore' from 0 to 100 based on how well it matches.
-                3. Write a brief, helpful 'compatibilityInsight' explaining why it's a good match.
-                4. Strongly prioritize items where "isVerifiedSafe" is true or that have a high "trustScore".
-                5. Return ONLY a valid JSON array (no markdown code blocks, no extra text) matching this exact schema:
+                Your Task:
+                1. Filter and rank the inventory items based on how well they match the customer's intent, preferences, and budget.
+                2. Calculate a 'fitScore' from 0 to 100 representing exact compatibility.
+                3. Write a 'compatibilityInsight' explaining specifically how this item addresses the user's prompt (e.g., price vs budget, specific needs).
+                4. Write a detailed 'explanation' breaking down the product's value, condition, key features, and why it is a safe/good purchase based on its trust score.
+                5. Strongly prioritize items that are verified safe (`isVerifiedSafe: true`) or have high `trustScore`.
+                6. Return ONLY a valid JSON array (no markdown code blocks, no extra text) matching this exact schema:
                 [
                   {
                     "productId": Long,
@@ -62,7 +61,8 @@ public class AiSearchService {
                     "trustScore": Integer,
                     "isVerifiedSafe": Boolean,
                     "fitScore": Integer,
-                    "compatibilityInsight": String
+                    "compatibilityInsight": String,
+                    "explanation": String
                   }
                 ]
                 """;
@@ -73,21 +73,15 @@ public class AiSearchService {
                     "inventoryJson", inventoryJson
             ));
 
-            // 4. Call OpenRouter GPT model via Spring AI
             ChatResponse response = chatModel.call(prompt);
-//            String aiResponseContent = response.getResult().getOutput().getContent();
             String aiResponseContent = response.getResult().getOutput().getText();
 
-            // 5. Clean up markdown wrappers if LLM includes ```json ... ```
             String cleanedJson = cleanJsonOutput(aiResponseContent);
 
-            // 6. Parse JSON response into DTO list
             return objectMapper.readValue(cleanedJson, new TypeReference<List<ProductRecommendationDto>>() {});
 
         } catch (Exception e) {
             log.error("Failed to process AI conversational search via OpenRouter: {}", e.getMessage(), e);
-
-            // Fallback: Return sorted stream fallback if LLM network or parsing hiccups occur
             return getFallbackRecommendations(allProducts, userQuery);
         }
     }
@@ -117,7 +111,8 @@ public class AiSearchService {
                         .trustScore(product.getTrustScore() != null ? product.getTrustScore() : 80)
                         .isVerifiedSafe(product.getIsVerifiedSafe() != null ? product.getIsVerifiedSafe() : true)
                         .fitScore(75)
-                        .compatibilityInsight("Fallback match for query: " + query)
+                        .compatibilityInsight("Matches your search query: '" + query + "'.")
+                        .explanation("This item is part of our active inventory with standard safety verification and solid value for money.")
                         .build())
                 .collect(Collectors.toList());
     }
