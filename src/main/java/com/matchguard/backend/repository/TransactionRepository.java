@@ -19,4 +19,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // Find a transaction using the unique secure QR token for the release handshake
     Optional<Transaction> findByQrToken(String qrToken);
+
+    List<Transaction> findByProduct_SellerIdOrderByUpdatedAtDesc(Long sellerId);
 }
