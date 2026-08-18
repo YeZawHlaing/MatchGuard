@@ -6,14 +6,14 @@ MatchGuard is an AI-driven search and escrow protocol designed to protect social
 
 ### Documenation
 
-| Documentation                         | Links to read                                                                                                                                        |
-|:--------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------|
- | Documentation for spring architecture | https://github.com/YeZawHlaing/MatchGuard/blob/main/Documentation.md                                                                                 |
- | Github Workflow                       | https://github.com/YeZawHlaing/MatchGuard/blob/main/GitFlow.md                                                                                       |
-| Project Architecture                  | https://github.com/YeZawHlaing/MatchGuard/blob/main/ProjectStructure.md                                                                              |
-| Project Structure Explaination        | https://github.com/YeZawHlaing/MatchGuard/blob/main/PackageDescription.md                                                                            |
-| Auth Endpoints Doc                    | https://github.com/YeZawHlaing/MatchGuard/blob/main/allDocumentation/AUTH.md                                                                         |
-
+| Documentation                         | Links to read                                                                        |
+|:--------------------------------------|:-------------------------------------------------------------------------------------|
+ | Documentation for spring architecture | https://github.com/YeZawHlaing/MatchGuard/blob/main/Documentation.md                 |
+ | Github Workflow                       | https://github.com/YeZawHlaing/MatchGuard/blob/main/GitFlow.md                       |
+| Project Architecture                  | https://github.com/YeZawHlaing/MatchGuard/blob/main/ProjectStructure.md              |
+| Project Structure Explaination        | https://github.com/YeZawHlaing/MatchGuard/blob/main/PackageDescription.md            |
+| Auth Endpoints Doc                    | https://github.com/YeZawHlaing/MatchGuard/blob/main/allDocumentation/AUTH.md         |
+| Transaction and OCR Verificaton       | https://github.com/YeZawHlaing/MatchGuard/blob/main/allDocumentation/transaction.md  |
 ---
 ### Tech Stack
 
