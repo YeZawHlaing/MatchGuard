@@ -1,5 +1,6 @@
 package com.matchguard.backend.service;
 
+import com.matchguard.backend.dto.AiScamDetectionResult;
 import com.matchguard.backend.dto.ProductRequestDto;
 import com.matchguard.backend.dto.ProductResponseDto;
 import com.matchguard.backend.entity.Product;
@@ -22,33 +23,51 @@ public class ProductService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AiScamDetectionService aiScamDetectionService;
+
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto requestDto) {
+
         User seller = userRepository.findById(requestDto.getSellerId())
                 .orElseThrow(() -> new RuntimeException("Seller not found"));
 
+        // AI scam detection
+        AiScamDetectionResult aiResult =
+                aiScamDetectionService.analyzeProduct(
+                        requestDto.getTitle(),
+                        requestDto.getDescription(),
+                        requestDto.getPrice(),
+                        requestDto.getSocialPostUrl()
+                );
+
+        // Create product with AI-generated trust metrics
         Product product = Product.builder()
                 .seller(seller)
                 .title(requestDto.getTitle())
                 .description(requestDto.getDescription())
                 .price(requestDto.getPrice())
                 .socialPostUrl(requestDto.getSocialPostUrl())
-                // TODO: Integrate actual AI scam detection later
-                .trustScore(100)
-                .scamAnalysisSummary("Product registered. Awaiting AI processing.")
-                .isVerifiedSafe(true)
+                .trustScore(aiResult.getTrustScore())
+                .scamAnalysisSummary(aiResult.getScamAnalysisSummary())
+                .isVerifiedSafe(aiResult.getIsVerifiedSafe())
                 .build();
 
         product = productRepository.save(product);
+
         return mapToDto(product);
     }
 
     public List<ProductResponseDto> getProductsBySeller(Long sellerId) {
         List<Product> products = productRepository.findBySellerId(sellerId);
-        return products.stream().map(this::mapToDto).collect(Collectors.toList());
+
+        return products.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
     private ProductResponseDto mapToDto(Product product) {
+
         return ProductResponseDto.builder()
                 .id(product.getId())
                 .sellerId(product.getSeller().getId())
