@@ -69,7 +69,6 @@ screenshot,| File,| "The payment transfer slip image (.jpg, .png)" |
     "status": "PENDING_VERIFICATION",
     "senderPhone": "09683776164",
     "screenshotUrl": "https://pub-11021a51faf24764b674a6afdc69061c.r2.dev/receipts/535734b5-50f8-4696-9422-e43ee93a1647_kpay.jpg",
-    "qrToken": null,
     "aiVerificationNotes": "System failed to read the receipt image automatically. Manual review required.",
     "updatedAt": "2026-08-18T10:32:26.213775"
 }
@@ -97,7 +96,6 @@ Access: `Seller Role (ROLE_SELLER)`
         "status": "PENDING_VERIFICATION",
         "senderPhone": "09683776164",
         "screenshotUrl": "https://pub-11021a51faf24764b674a6afdc69061c.r2.dev/receipts/535734b5-50f8-4696-9422-e43ee93a1647_kpay.jpg",
-        "qrToken": null,
         "aiVerificationNotes": "System failed to read the receipt image automatically. Manual review required.",
         "updatedAt": "2026-08-18T10:32:26.213775"
     }
@@ -126,10 +124,59 @@ Access: `Seller Role (ROLE_SELLER)`
     "status": "ESCROW_LOCKED",
     "senderPhone": "09683776164",
     "screenshotUrl": "https://pub-11021a51faf24764b674a6afdc69061c.r2.dev/receipts/535734b5-50f8-4696-9422-e43ee93a1647_kpay.jpg",
-    "qrToken": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
     "aiVerificationNotes": "Manually verified and accepted by seller.",
     "updatedAt": "2026-08-18T10:45:10.123456"
 }
 ```
+
+---
+
+**Endpoint 4:** Generate QR Code for Handover
+
+`URL: /api/transactions/{transactionId}/qr`
+
+Method: `GET`
+
+Access: `Seller Role (ROLE_SELLER)` and the seller must own the transaction.
+
+Returns: `image/png`. The QR image encodes the transaction ID and its one-time token. It is available only while the transaction status is `ESCROW_LOCKED`.
+
+---
+
+**Endpoint 5:** Complete Handover with a Scanned QR Token
+
+`URL: /api/transactions/release`
+
+Method: `POST`
+
+Access: the transaction's buyer or seller.
+
+```json
+{
+  "transactionId": 1,
+  "qrToken": "scanned-one-time-token"
+}
+```
+
+A valid token changes the status from `ESCROW_LOCKED` to `COMPLETED` and logs payout intent for the seller.
+
+---
+
+**Endpoint 6:** Cancel and Refund Before Handover
+
+`URL: /api/transactions/cancel`
+
+Method: `POST`
+
+Access: the buyer who created the transaction.
+
+```json
+{
+  "transactionId": 1,
+  "reason": "Item was not as described"
+}
+```
+
+Pending or escrow-locked transactions are changed to `CANCELLED_AND_REFUNDED`. Completed transactions cannot be cancelled.
 
 

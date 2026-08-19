@@ -2,12 +2,16 @@ package com.matchguard.backend.controller;
 
 
 import com.matchguard.backend.dto.paymentDto.CheckoutRequestDto;
+import com.matchguard.backend.dto.paymentDto.CancelTransactionRequestDto;
+import com.matchguard.backend.dto.paymentDto.ReleaseTransactionRequestDto;
 import com.matchguard.backend.dto.paymentDto.TransactionResponseDto;
+import jakarta.validation.Valid;
 import com.matchguard.backend.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,5 +50,30 @@ public class TransactionController {
     ) {
         TransactionResponseDto response = transactionService.manualApproveBySeller(transactionId, sellerId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping(value = "/{transactionId}/qr", produces = MediaType.IMAGE_PNG_VALUE)
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<byte[]> generateQrCode(@PathVariable Long transactionId, Authentication authentication) {
+        byte[] qrCode = transactionService.generateQrCode(transactionId, authentication.getName());
+        return ResponseEntity.ok(qrCode);
+    }
+
+    @PostMapping("/release")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'SELLER')")
+    public ResponseEntity<TransactionResponseDto> releaseTransaction(
+            @Valid @RequestBody ReleaseTransactionRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(transactionService.releaseTransaction(request, authentication.getName()));
+    }
+
+    @PostMapping("/cancel")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<TransactionResponseDto> cancelTransaction(
+            @Valid @RequestBody CancelTransactionRequestDto request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(transactionService.cancelTransaction(request, authentication.getName()));
     }
 }
