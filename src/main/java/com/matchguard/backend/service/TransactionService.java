@@ -2,6 +2,8 @@ package com.matchguard.backend.service;
 
 
 import com.matchguard.backend.dto.paymentDto.CheckoutRequestDto;
+import com.matchguard.backend.dto.paymentDto.CancelTransactionRequestDto;
+import com.matchguard.backend.dto.paymentDto.ReleaseTransactionRequestDto;
 import com.matchguard.backend.dto.paymentDto.TransactionResponseDto;
 import com.matchguard.backend.entity.Product;
 import com.matchguard.backend.entity.Transaction;
@@ -13,6 +15,9 @@ import com.matchguard.backend.util.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,11 +27,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransactionService {
 
+    private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
+
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final R2StorageService r2StorageService;
     private final AiOcrService aiOcrService;
+    private final QrCodeService qrCodeService;
 
     @Transactional
     public TransactionResponseDto processCheckout(CheckoutRequestDto request) {
@@ -118,5 +126,71 @@ public class TransactionService {
         }
 
         return mapToDto(transaction, "Manually verified and accepted by seller.");
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generateQrCode(Long transactionId, String sellerEmail) {
+        Transaction transaction = getTransaction(transactionId);
+        ensureSellerOwnsTransaction(transaction, sellerEmail);
+
+        if (transaction.getStatus() != TransactionStatus.ESCROW_LOCKED || transaction.getQrToken() == null) {
+            throw new IllegalStateException("A QR code is available only for escrow-locked transactions.");
+        }
+
+        return qrCodeService.generatePng(transaction.getId() + ":" + transaction.getQrToken());
+    }
+
+    @Transactional
+    public TransactionResponseDto releaseTransaction(ReleaseTransactionRequestDto request, String actorEmail) {
+        Transaction transaction = getTransaction(request.getTransactionId());
+        ensureParticipant(transaction, actorEmail);
+
+        if (transaction.getStatus() != TransactionStatus.ESCROW_LOCKED) {
+            throw new IllegalStateException("Only escrow-locked transactions can be completed.");
+        }
+        if (!request.getQrToken().equals(transaction.getQrToken())) {
+            throw new IllegalArgumentException("Invalid QR token.");
+        }
+
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction = transactionRepository.save(transaction);
+        log.info("Payout intent logged for transaction {} to seller phone {}", transaction.getId(), transaction.getProduct().getSeller().getPhone());
+        return mapToDto(transaction, "QR handover verified. Payout intent logged.");
+    }
+
+    @Transactional
+    public TransactionResponseDto cancelTransaction(CancelTransactionRequestDto request, String buyerEmail) {
+        Transaction transaction = getTransaction(request.getTransactionId());
+
+        if (!transaction.getBuyer().getEmail().equalsIgnoreCase(buyerEmail)) {
+            throw new AccessDeniedException("Only the buyer who created the transaction can request a cancellation.");
+        }
+        if (transaction.getStatus() != TransactionStatus.ESCROW_LOCKED && transaction.getStatus() != TransactionStatus.PENDING_VERIFICATION) {
+            throw new IllegalStateException("This transaction can no longer be cancelled.");
+        }
+
+        transaction.setStatus(TransactionStatus.CANCELLED_AND_REFUNDED);
+        transaction = transactionRepository.save(transaction);
+        log.info("Cancellation and refund intent logged for transaction {}. Reason: {}", transaction.getId(), request.getReason());
+        return mapToDto(transaction, "Cancellation requested: " + request.getReason());
+    }
+
+    private Transaction getTransaction(Long transactionId) {
+        return transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + transactionId));
+    }
+
+    private void ensureSellerOwnsTransaction(Transaction transaction, String sellerEmail) {
+        if (!transaction.getProduct().getSeller().getEmail().equalsIgnoreCase(sellerEmail)) {
+            throw new AccessDeniedException("Only the seller who owns this transaction can generate its QR code.");
+        }
+    }
+
+    private void ensureParticipant(Transaction transaction, String actorEmail) {
+        boolean isBuyer = transaction.getBuyer().getEmail().equalsIgnoreCase(actorEmail);
+        boolean isSeller = transaction.getProduct().getSeller().getEmail().equalsIgnoreCase(actorEmail);
+        if (!isBuyer && !isSeller) {
+            throw new AccessDeniedException("Only the buyer or seller can complete this transaction.");
+        }
     }
 }

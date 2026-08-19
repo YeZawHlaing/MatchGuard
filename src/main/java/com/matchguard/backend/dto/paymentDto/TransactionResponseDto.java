@@ -1,6 +1,7 @@
 package com.matchguard.backend.dto.paymentDto;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.matchguard.backend.util.enums.TransactionStatus;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class TransactionResponseDto {
     private TransactionStatus status;
     private String senderPhone;
     private String screenshotUrl;
+    @JsonIgnore
     private String qrToken;
     private String aiVerificationNotes; // Passed in response from OCR result
     private LocalDateTime updatedAt;
