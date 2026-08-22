@@ -21,4 +21,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Optional<Transaction> findByQrToken(String qrToken);
 
     List<Transaction> findByProduct_SellerIdOrderByUpdatedAtDesc(Long sellerId);
+
+    // TransactionRepository.java
+    List<Transaction> findByBuyerIdOrderByUpdatedAtDesc(Long buyerId);
 }

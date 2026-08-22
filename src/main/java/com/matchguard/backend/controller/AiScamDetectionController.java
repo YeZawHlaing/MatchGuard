@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ai")
+@CrossOrigin("*")
 public class AiScamDetectionController {
 
     private final AiScamDetectionService aiScamDetectionService;

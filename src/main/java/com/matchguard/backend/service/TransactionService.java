@@ -193,4 +193,45 @@ public class TransactionService {
             throw new AccessDeniedException("Only the buyer or seller can complete this transaction.");
         }
     }
+
+    @Transactional
+    public TransactionResponseDto updateTransactionStatus(Long transactionId, TransactionStatus newStatus) {
+        Transaction transaction = getTransaction(transactionId);
+
+        // Optional: Add business logic here to validate if the transition is allowed
+        // e.g., if (transaction.getStatus() == TransactionStatus.COMPLETED) throw new IllegalStateException(...)
+
+        transaction.setStatus(newStatus);
+        transaction = transactionRepository.save(transaction);
+
+        log.info("Transaction {} status updated to {}", transactionId, newStatus);
+
+        return mapToDto(transaction, "Status updated to " + newStatus);
+    }
+
+    // TransactionService.java
+    public List<TransactionResponseDto> getBuyerTransactions(Long buyerId) {
+        return transactionRepository.findByBuyerIdOrderByUpdatedAtDesc(buyerId)
+                .stream()
+                .map(t -> mapToDto(t, "Verified order in escrow"))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public String getPaymentScreenshotForSeller(Long transactionId, Long sellerId) {
+        Transaction transaction = getTransaction(transactionId);
+
+        // Verify security constraint: ensure the product belongs to the seller
+        if (transaction.getProduct() == null ||
+                transaction.getProduct().getSeller() == null ||
+                !transaction.getProduct().getSeller().getId().equals(sellerId)) {
+            throw new AccessDeniedException("Unauthorized: You do not own this product's transaction.");
+        }
+
+        if (transaction.getScreenshotUrl() == null) {
+            throw new RuntimeException("No payment screenshot found for transaction id: " + transactionId);
+        }
+
+        return transaction.getScreenshotUrl();
+    }
 }

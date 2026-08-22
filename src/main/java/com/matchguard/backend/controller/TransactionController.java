@@ -1,6 +1,7 @@
 package com.matchguard.backend.controller;
 
 
+import com.matchguard.backend.dto.UpdateStatusRequestDto;
 import com.matchguard.backend.dto.paymentDto.CheckoutRequestDto;
 import com.matchguard.backend.dto.paymentDto.CancelTransactionRequestDto;
 import com.matchguard.backend.dto.paymentDto.ReleaseTransactionRequestDto;
@@ -15,10 +16,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
+@CrossOrigin("*")
+
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -33,11 +37,29 @@ public class TransactionController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{transactionId}/screenshot")
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<Map<String, String>> getPaymentScreenshot(
+            @PathVariable Long transactionId,
+            @RequestParam Long sellerId
+    ) {
+        String screenshotUrl = transactionService.getPaymentScreenshotForSeller(transactionId, sellerId);
+        return ResponseEntity.ok(Map.of("screenshotUrl", screenshotUrl));
+    }
+
     // SELLER views their secured orders dashboard
     @GetMapping("/seller/{sellerId}")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<List<TransactionResponseDto>> getSellerDashboard(@PathVariable Long sellerId) {
         List<TransactionResponseDto> transactions = transactionService.getSellerTransactions(sellerId);
+        return ResponseEntity.ok(transactions);
+    }
+
+    // TransactionController.java
+    @GetMapping("/buyer/{buyerId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<TransactionResponseDto>> getBuyerTransactions(@PathVariable Long buyerId) {
+        List<TransactionResponseDto> transactions = transactionService.getBuyerTransactions(buyerId);
         return ResponseEntity.ok(transactions);
     }
 
@@ -75,5 +97,15 @@ public class TransactionController {
             Authentication authentication
     ) {
         return ResponseEntity.ok(transactionService.cancelTransaction(request, authentication.getName()));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<TransactionResponseDto> updateTransactionStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateStatusRequestDto request) {
+
+        TransactionResponseDto response = transactionService.updateTransactionStatus(id, request.getStatus());
+        return ResponseEntity.ok(response);
     }
 }
